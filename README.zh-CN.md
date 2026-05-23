@@ -17,7 +17,7 @@
 
 ## 本地准备
 
-本地编译需要 Windows、Visual Studio C++ 工具链和 Strawberry Perl。
+本地编译需要 Windows、Visual Studio C++ 工具链、Strawberry Perl 和 NASM。
 
 ### 1. 安装 Visual Studio C++ 生成工具
 
@@ -31,7 +31,7 @@
 
 如果本机还在使用 Visual Studio 2022，脚本也可以继续工作。安装 Visual Studio 2026 后会自动优先使用 Visual Studio 2026。
 
-### 2. 安装 Strawberry Perl
+### 2. 安装 Strawberry Perl 和 NASM
 
 可以从官网下载并安装 Strawberry Perl：
 
@@ -45,10 +45,17 @@ https://strawberryperl.com/
 choco install strawberryperl -y
 ```
 
-安装完成后重新打开 PowerShell，确认 Perl 可用：
+使用 Chocolatey 安装 NASM：
+
+```powershell
+choco install nasm -y
+```
+
+安装完成后重新打开 PowerShell，确认 Perl 和 NASM 可用：
 
 ```powershell
 perl -v
+nasm -v
 ```
 
 ### 3. 编译 OpenSSL

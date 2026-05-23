@@ -17,7 +17,7 @@ Automated Windows builds for OpenSSL using local PowerShell scripts and GitHub A
 
 ## Local Requirements
 
-Local builds require Windows, a Visual Studio C++ toolchain, and Strawberry Perl.
+Local builds require Windows, a Visual Studio C++ toolchain, Strawberry Perl, and NASM.
 
 ### 1. Install Visual Studio C++ Build Tools
 
@@ -31,7 +31,7 @@ The scripts use `vswhere.exe` to locate the latest Visual Studio C++ toolchain a
 
 If Visual Studio 2022 is still installed, the scripts can continue to work with it. When Visual Studio 2026 is available, it is preferred automatically.
 
-### 2. Install Strawberry Perl
+### 2. Install Strawberry Perl and NASM
 
 Download and install Strawberry Perl:
 
@@ -45,10 +45,17 @@ Or install it with Chocolatey:
 choco install strawberryperl -y
 ```
 
-After installation, reopen PowerShell and verify Perl:
+Install NASM with Chocolatey:
+
+```powershell
+choco install nasm -y
+```
+
+After installation, reopen PowerShell and verify Perl and NASM:
 
 ```powershell
 perl -v
+nasm -v
 ```
 
 ### 3. Build OpenSSL

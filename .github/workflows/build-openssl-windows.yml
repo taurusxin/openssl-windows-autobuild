@@ -143,11 +143,13 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install Strawberry Perl
+      - name: Install build dependencies
         shell: pwsh
         run: |
           choco install strawberryperl --no-progress -y
+          choco install nasm --no-progress -y
           "C:\Strawberry\perl\bin" >> $env:GITHUB_PATH
+          "C:\Program Files\NASM" >> $env:GITHUB_PATH
 
       - name: Build and package OpenSSL
         id: package

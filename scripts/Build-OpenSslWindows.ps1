@@ -31,7 +31,7 @@ $targetMap = @{
     }
 }
 
-$configureArgs = @($targetMap[$Target].PerlTarget, 'no-asm')
+$configureArgs = @($targetMap[$Target].PerlTarget)
 if ($Linkage -eq 'static') {
     $configureArgs += 'no-shared'
 }
@@ -66,6 +66,10 @@ function Test-IsChildPath {
 
 if (-not (Get-Command perl -ErrorAction SilentlyContinue)) {
     throw 'Perl was not found in PATH. Install Strawberry Perl and open a new terminal.'
+}
+
+if (-not (Get-Command nasm -ErrorAction SilentlyContinue)) {
+    throw 'NASM was not found in PATH. Install NASM and open a new terminal.'
 }
 
 if (-not (Get-Command nmake -ErrorAction SilentlyContinue)) {
