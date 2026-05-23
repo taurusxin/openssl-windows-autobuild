@@ -120,7 +120,7 @@ openssl-4.0.0-windows-x86-static.zip
 .github/workflows/build-openssl-windows.yml
 ```
 
-定时工作流每天运行一次，会先检查 OpenSSL 官方最新稳定版。如果当前仓库已经存在匹配的 `openssl-x.y.z` release 或 tag，就跳过构建，并删除这次没有实际构建的每日巡检 run。
+定时工作流每周运行一次，会先检查 OpenSSL 官方最新稳定版。如果当前仓库已经存在匹配的 `openssl-x.y.z` release 或 tag，就跳过构建。
 
 云端构建使用 GitHub 官方的 `windows-2025-vs2026` runner，也就是 Windows Server 2025 with Visual Studio 2026 镜像。
 

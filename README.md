@@ -120,7 +120,7 @@ The workflow is located at:
 .github/workflows/build-openssl-windows.yml
 ```
 
-The scheduled workflow runs once per day. It checks the latest stable OpenSSL release from upstream first. If this repository already has a matching `openssl-x.y.z` release or tag, the build is skipped and the skipped scheduled run is deleted.
+The scheduled workflow runs once per week. It checks the latest stable OpenSSL release from upstream first. If this repository already has a matching `openssl-x.y.z` release or tag, the build is skipped.
 
 Cloud builds use the GitHub-hosted `windows-2025-vs2026` runner, which provides Windows Server 2025 with the Visual Studio 2026 image.
 

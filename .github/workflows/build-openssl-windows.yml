@@ -2,7 +2,7 @@ name: Build OpenSSL for Windows
 
 on:
   schedule:
-    - cron: "17 18 * * *"
+    - cron: "17 18 * * 0"
   workflow_dispatch:
     inputs:
       openssl_version:
@@ -32,7 +32,6 @@ on:
       - "openssl-*"
 
 permissions:
-  actions: write
   contents: write
 
 env:
@@ -48,7 +47,6 @@ jobs:
       upload_release: ${{ steps.release.outputs.upload_release }}
       release_tag: ${{ steps.release.outputs.release_tag }}
       should_build: ${{ steps.version.outputs.should_build }}
-      skip_reason: ${{ steps.version.outputs.skip_reason }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -75,7 +73,6 @@ jobs:
 
           $releaseTag = "openssl-$version"
           $shouldBuild = 'true'
-          $skipReason = ''
 
           if ('${{ github.event_name }}' -eq 'schedule') {
             $exists = ./scripts/Test-OpenSslReleaseExists.ps1 `
@@ -85,13 +82,11 @@ jobs:
 
             if ($exists -eq 'true') {
               $shouldBuild = 'false'
-              $skipReason = "OpenSSL $version already exists in this repository."
             }
           }
 
           "openssl_version=$version" >> $env:GITHUB_OUTPUT
           "should_build=$shouldBuild" >> $env:GITHUB_OUTPUT
-          "skip_reason=$skipReason" >> $env:GITHUB_OUTPUT
 
       - name: Resolve release upload setting
         id: release
@@ -198,22 +193,3 @@ jobs:
           name: OpenSSL ${{ needs.prepare.outputs.openssl_version }} for Windows
           files: packages/**/*.zip
           fail_on_unmatched_files: true
-
-  cleanup-skipped-run:
-    name: Delete skipped scheduled run
-    runs-on: ubuntu-latest
-    needs: prepare
-    if: github.event_name == 'schedule' && needs.prepare.outputs.should_build == 'false'
-    steps:
-      - name: Report skip reason
-        run: echo "${{ needs.prepare.outputs.skip_reason }}"
-
-      - name: Delete this workflow run
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.actions.deleteWorkflowRun({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.runId
-            });
