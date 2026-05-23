@@ -1,0 +1,219 @@
+name: Build OpenSSL for Windows
+
+on:
+  schedule:
+    - cron: "17 18 * * *"
+  workflow_dispatch:
+    inputs:
+      openssl_version:
+        description: OpenSSL version to build. Leave empty to build the latest upstream release.
+        required: false
+        default: ""
+      targets:
+        description: Build targets, separated by commas. Supported values are x64 and x86.
+        required: true
+        default: x64,x86
+      linkage:
+        description: Build linkage
+        required: true
+        type: choice
+        options:
+          - both
+          - shared
+          - static
+        default: both
+      upload_release:
+        description: Upload packages to a GitHub release
+        required: true
+        type: boolean
+        default: false
+  push:
+    tags:
+      - "openssl-*"
+
+permissions:
+  actions: write
+  contents: write
+
+env:
+  DEFAULT_OPENSSL_VERSION: 4.0.0
+
+jobs:
+  prepare:
+    name: Prepare build matrix
+    runs-on: windows-2025-vs2026
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      openssl_version: ${{ steps.version.outputs.openssl_version }}
+      upload_release: ${{ steps.release.outputs.upload_release }}
+      release_tag: ${{ steps.release.outputs.release_tag }}
+      should_build: ${{ steps.version.outputs.should_build }}
+      skip_reason: ${{ steps.version.outputs.skip_reason }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Resolve OpenSSL version
+        id: version
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = '${{ github.event.inputs.openssl_version }}'
+
+          if ([string]::IsNullOrWhiteSpace($version) -and '${{ github.ref_type }}' -ne 'tag') {
+            $version = ./scripts/Get-LatestOpenSslVersion.ps1 -GitHubToken $env:GH_TOKEN
+          }
+
+          if ([string]::IsNullOrWhiteSpace($version) -and '${{ github.ref_type }}' -eq 'tag') {
+            $version = '${{ github.ref_name }}' -replace '^openssl-', ''
+          }
+
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            $version = $env:DEFAULT_OPENSSL_VERSION
+          }
+
+          $releaseTag = "openssl-$version"
+          $shouldBuild = 'true'
+          $skipReason = ''
+
+          if ('${{ github.event_name }}' -eq 'schedule') {
+            $exists = ./scripts/Test-OpenSslReleaseExists.ps1 `
+              -Repository '${{ github.repository }}' `
+              -Version $version `
+              -GitHubToken $env:GH_TOKEN
+
+            if ($exists -eq 'true') {
+              $shouldBuild = 'false'
+              $skipReason = "OpenSSL $version already exists in this repository."
+            }
+          }
+
+          "openssl_version=$version" >> $env:GITHUB_OUTPUT
+          "should_build=$shouldBuild" >> $env:GITHUB_OUTPUT
+          "skip_reason=$skipReason" >> $env:GITHUB_OUTPUT
+
+      - name: Resolve release upload setting
+        id: release
+        shell: pwsh
+        run: |
+          $uploadRelease = '${{ github.event.inputs.upload_release }}'
+          if ('${{ github.event_name }}' -eq 'schedule') {
+            $uploadRelease = 'true'
+          }
+          if ('${{ github.event_name }}' -eq 'push' -and '${{ github.ref_type }}' -eq 'tag') {
+            $uploadRelease = 'true'
+          }
+          if ([string]::IsNullOrWhiteSpace($uploadRelease)) {
+            $uploadRelease = 'false'
+          }
+          if ('${{ github.ref_type }}' -eq 'tag') {
+            $releaseTag = '${{ github.ref_name }}'
+          } else {
+            $releaseTag = 'openssl-${{ steps.version.outputs.openssl_version }}'
+          }
+          "upload_release=$uploadRelease" >> $env:GITHUB_OUTPUT
+          "release_tag=$releaseTag" >> $env:GITHUB_OUTPUT
+
+      - name: Create matrix
+        id: matrix
+        shell: pwsh
+        run: |
+          $requestedTargets = '${{ github.event.inputs.targets }}'
+          if ([string]::IsNullOrWhiteSpace($requestedTargets)) {
+            $requestedTargets = 'x64,x86'
+          }
+
+          $requestedLinkage = '${{ github.event.inputs.linkage }}'
+          if ([string]::IsNullOrWhiteSpace($requestedLinkage)) {
+            $requestedLinkage = 'both'
+          }
+
+          $matrix = ./scripts/New-OpenSslBuildMatrix.ps1 `
+            -Targets $requestedTargets `
+            -Linkage $requestedLinkage
+          "matrix=$matrix" >> $env:GITHUB_OUTPUT
+
+  build:
+    name: OpenSSL ${{ needs.prepare.outputs.openssl_version }} ${{ matrix.arch }} ${{ matrix.linkage }}
+    runs-on: windows-2025-vs2026
+    needs: prepare
+    if: needs.prepare.outputs.should_build == 'true'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    env:
+      OPENSSL_VERSION: ${{ needs.prepare.outputs.openssl_version }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Strawberry Perl
+        shell: pwsh
+        run: |
+          choco install strawberryperl --no-progress -y
+          "C:\Strawberry\perl\bin" >> $env:GITHUB_PATH
+
+      - name: Build and package OpenSSL
+        id: package
+        shell: pwsh
+        run: |
+          $result = ./scripts/Build-OpenSslWindows.ps1 `
+            -Version $env:OPENSSL_VERSION `
+            -Target '${{ matrix.arch }}' `
+            -Linkage '${{ matrix.linkage }}' `
+            -SourceRoot '${{ github.workspace }}\build' `
+            -InstallRoot '${{ github.workspace }}\dist' `
+            -PackageRoot $env:RUNNER_TEMP
+
+          $zipPath = $result | Select-Object -Last 1
+          $packageName = [System.IO.Path]::GetFileNameWithoutExtension($zipPath)
+          "package_name=$packageName" >> $env:GITHUB_OUTPUT
+          "zip_path=$zipPath" >> $env:GITHUB_OUTPUT
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.package_name }}
+          path: ${{ steps.package.outputs.zip_path }}
+          if-no-files-found: error
+
+  publish:
+    name: Publish release
+    runs-on: windows-2025-vs2026
+    needs:
+      - prepare
+      - build
+    if: needs.prepare.outputs.should_build == 'true' && needs.prepare.outputs.upload_release == 'true'
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          path: packages
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.release_tag }}
+          name: OpenSSL ${{ needs.prepare.outputs.openssl_version }} for Windows
+          files: packages/**/*.zip
+          fail_on_unmatched_files: true
+
+  cleanup-skipped-run:
+    name: Delete skipped scheduled run
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: github.event_name == 'schedule' && needs.prepare.outputs.should_build == 'false'
+    steps:
+      - name: Report skip reason
+        run: echo "${{ needs.prepare.outputs.skip_reason }}"
+
+      - name: Delete this workflow run
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.deleteWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId
+            });
