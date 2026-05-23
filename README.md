@@ -6,90 +6,96 @@
 [![Platform](https://img.shields.io/badge/platform-Windows-0078D4?style=flat-square)](https://github.com/taurusxin/openssl-windows-autobuild)
 [![OpenSSL](https://img.shields.io/badge/OpenSSL-4.0.0-721412?style=flat-square)](https://github.com/openssl/openssl)
 
-Windows OpenSSL 自动编译脚本和 GitHub Actions。
+English | [中文](README.zh-CN.md)
 
-1. 本地一键编译。
-2. GitHub Actions 每日自动检查 OpenSSL 新版本，有新版本才构建并发布 Release。
+Automated Windows builds for OpenSSL using local PowerShell scripts and GitHub Actions.
 
-## 本地准备
+1. Build OpenSSL locally with a single command.
+2. Check the latest upstream OpenSSL release every day with GitHub Actions.
+3. Build only when a matching release or tag does not already exist.
+4. Publish x64/x86 shared and static ZIP packages to GitHub Releases.
 
-本地编译需要 Windows、Visual Studio 2026 C++ 工具链和 Strawberry Perl。
+## Local Requirements
 
-### 1. 安装 Visual Studio 2026 C++ 工具链
+Local builds require Windows, a Visual Studio C++ toolchain, and Strawberry Perl.
 
-安装 Visual Studio 2026 或 Build Tools for Visual Studio 2026，并勾选：
+### 1. Install Visual Studio C++ Build Tools
+
+Install Visual Studio 2026 or Build Tools for Visual Studio 2026, then enable:
 
 - `Desktop development with C++`
 - MSVC C++ build tools
 - Windows 10/11 SDK
 
-脚本会自动用 `vswhere.exe` 查找最新的 Visual Studio C++ 工具链，然后调用 `vcvarsall.bat`，所以不需要手动打开“开发者命令提示符”。如果本机还在使用 VS2022，脚本也可以继续工作；装了 VS2026 时会优先使用 VS2026。
+The scripts use `vswhere.exe` to locate the latest Visual Studio C++ toolchain and then call `vcvarsall.bat`, so you do not need to manually open a Developer Command Prompt.
 
-### 2. 安装 Strawberry Perl
+If Visual Studio 2022 is still installed, the scripts can continue to work with it. When Visual Studio 2026 is available, it is preferred automatically.
 
-可以从官网下载并安装：
+### 2. Install Strawberry Perl
+
+Download and install Strawberry Perl:
 
 ```text
 https://strawberryperl.com/
 ```
 
-也可以用 Chocolatey：
+Or install it with Chocolatey:
 
 ```powershell
 choco install strawberryperl -y
 ```
 
-安装完成后重新打开 PowerShell，确认 Perl 可用：
+After installation, reopen PowerShell and verify Perl:
 
 ```powershell
 perl -v
 ```
 
-### 3. 一键编译
+### 3. Build OpenSSL
 
-编译最新版 OpenSSL，生成 x64 动态库：
+Build the latest OpenSSL release for x64 shared libraries:
 
 ```powershell
 .\scripts\Invoke-OpenSslBuild.ps1
 ```
 
-指定版本：
+Build a specific version:
 
 ```powershell
 .\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.0
 ```
 
-同时编译 x64 和 x86：
+Build both x64 and x86:
 
 ```powershell
 .\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.0 -Targets "x64,x86"
 ```
 
-只编译静态库：
+Build static libraries only:
 
 ```powershell
 .\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.0 -Targets x64 -Linkage static
 ```
 
-同时编译动态库和静态库：
+Build both shared and static libraries:
 
 ```powershell
 .\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.0 -Targets "x64,x86" -Linkage both
 ```
 
-只安装到 `dist`，不打包 zip：
+Install to `dist` without creating ZIP packages:
 
 ```powershell
 .\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.0 -Targets x64 -Linkage shared -NoPackage
 ```
 
-默认输出目录：
+Default output directories:
 
-- 源码和压缩包：`build`
-- 安装结果：`dist`
-- zip 包：`packages`
+- Source archives and extracted source: `build`
+- Installed OpenSSL files: `dist`
+- ZIP packages: `packages`
 
-生成的 zip 文件名类似：
+Generated package names look like this:
 
 ```text
 openssl-4.0.0-windows-x64-shared.zip
@@ -98,38 +104,38 @@ openssl-4.0.0-windows-x86-shared.zip
 openssl-4.0.0-windows-x86-static.zip
 ```
 
-## 脚本说明
+## Scripts
 
-- `scripts/Get-LatestOpenSslVersion.ps1`：从 OpenSSL GitHub Releases 查询最新稳定版本。
-- `scripts/Test-OpenSslReleaseExists.ps1`：检查当前仓库是否已有对应 `openssl-x.y.z` tag 或 release。
-- `scripts/New-OpenSslBuildMatrix.ps1`：生成 GitHub Actions matrix。
-- `scripts/Build-OpenSslWindows.ps1`：编译单个架构、单种链接方式。
-- `scripts/Invoke-OpenSslBuild.ps1`：本地一键入口，可一次编译多个架构和动态/静态组合。
+- `scripts/Get-LatestOpenSslVersion.ps1`: resolves the latest stable OpenSSL release from GitHub Releases.
+- `scripts/Test-OpenSslReleaseExists.ps1`: checks whether this repository already has a matching `openssl-x.y.z` release or tag.
+- `scripts/New-OpenSslBuildMatrix.ps1`: creates the GitHub Actions build matrix.
+- `scripts/Build-OpenSslWindows.ps1`: builds one architecture and one linkage type.
+- `scripts/Invoke-OpenSslBuild.ps1`: local entry point for building multiple architectures and linkage types.
 
 ## GitHub Actions
 
-工作流文件在：
+The workflow is located at:
 
 ```text
 .github/workflows/build-openssl-windows.yml
 ```
 
-它会每天自动运行一次，先检查 OpenSSL 官方最新稳定版本。如果当前仓库已经存在匹配的 `openssl-x.y.z` release 或 tag，就跳过构建，并删除这次没有实际构建的每日巡检 run。
+The scheduled workflow runs once per day. It checks the latest stable OpenSSL release from upstream first. If this repository already has a matching `openssl-x.y.z` release or tag, the build is skipped and the skipped scheduled run is deleted.
 
-云端构建使用 GitHub 官方的 `windows-2025-vs2026` runner，也就是 Windows Server 2025 with Visual Studio 2026 镜像。
+Cloud builds use the GitHub-hosted `windows-2025-vs2026` runner, which provides Windows Server 2025 with the Visual Studio 2026 image.
 
-你也可以在 GitHub 的 **Actions** 页面手动运行，参数包括：
+You can also run the workflow manually from the GitHub **Actions** page. Available inputs:
 
-- `openssl_version`：OpenSSL 版本。留空表示构建最新稳定版。
-- `targets`：`x64`、`x86`，或用逗号传入多个，例如 `x64,x86`。
-- `linkage`：`shared`、`static` 或 `both`。
-- `upload_release`：是否上传到 GitHub Release。
+- `openssl_version`: OpenSSL version to build. Leave empty to build the latest stable release.
+- `targets`: `x64`, `x86`, or multiple values separated by commas, such as `x64,x86`.
+- `linkage`: `shared`, `static`, or `both`.
+- `upload_release`: whether to upload packages to a GitHub Release.
 
-推送 `openssl-*` tag 也会触发构建：
+Pushing an `openssl-*` tag also triggers a build:
 
 ```powershell
 git tag openssl-4.0.0
 git push origin openssl-4.0.0
 ```
 
-tag 触发的构建会自动上传 zip 到对应 GitHub Release。
+Tag-triggered builds automatically upload ZIP packages to the matching GitHub Release.
