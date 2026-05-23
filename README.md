@@ -1,9 +1,9 @@
 # openssl-windows-autobuild
 
-[![Build OpenSSL for Windows](https://img.shields.io/github/actions/workflow/status/taurusxin/openssl-autobuild/build-openssl-windows.yml?branch=main&style=flat-square&label=build)](https://github.com/taurusxin/openssl-autobuild/actions/workflows/build-openssl-windows.yml)
-[![GitHub release](https://img.shields.io/github/v/release/taurusxin/openssl-autobuild?include_prereleases&sort=semver&style=flat-square)](https://github.com/taurusxin/openssl-autobuild/releases)
-[![Last commit](https://img.shields.io/github/last-commit/taurusxin/openssl-autobuild?style=flat-square)](https://github.com/taurusxin/openssl-autobuild/commits/main)
-[![Platform](https://img.shields.io/badge/platform-Windows-0078D4?style=flat-square)](https://github.com/taurusxin/openssl-autobuild)
+[![Build OpenSSL for Windows](https://img.shields.io/github/actions/workflow/status/taurusxin/openssl-windows-autobuild/build-openssl-windows.yml?branch=main&style=flat-square&label=build)](https://github.com/taurusxin/openssl-windows-autobuild/actions/workflows/build-openssl-windows.yml)
+[![GitHub release](https://img.shields.io/github/v/release/taurusxin/openssl-windows-autobuild?include_prereleases&sort=semver&style=flat-square)](https://github.com/taurusxin/openssl-windows-autobuild/releases)
+[![Last commit](https://img.shields.io/github/last-commit/taurusxin/openssl-windows-autobuild?style=flat-square)](https://github.com/taurusxin/openssl-windows-autobuild/commits/main)
+[![Platform](https://img.shields.io/badge/platform-Windows-0078D4?style=flat-square)](https://github.com/taurusxin/openssl-windows-autobuild)
 [![OpenSSL](https://img.shields.io/badge/OpenSSL-4.0.0-721412?style=flat-square)](https://github.com/openssl/openssl)
 
 Windows OpenSSL 自动编译脚本和 GitHub Actions。
