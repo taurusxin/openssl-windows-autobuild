@@ -4,14 +4,14 @@
 [![GitHub release](https://img.shields.io/github/v/release/taurusxin/openssl-windows-autobuild?include_prereleases&sort=semver&style=flat-square)](https://github.com/taurusxin/openssl-windows-autobuild/releases)
 [![Last commit](https://img.shields.io/github/last-commit/taurusxin/openssl-windows-autobuild?style=flat-square)](https://github.com/taurusxin/openssl-windows-autobuild/commits/main)
 [![Platform](https://img.shields.io/badge/platform-Windows-0078D4?style=flat-square)](https://github.com/taurusxin/openssl-windows-autobuild)
-[![OpenSSL](https://img.shields.io/badge/OpenSSL-4.0.0-721412?style=flat-square)](https://github.com/openssl/openssl)
+[![Upstream OpenSSL](https://img.shields.io/github/v/release/openssl/openssl?include_prereleases&sort=semver&style=flat-square&label=upstream&color=721412)](https://github.com/openssl/openssl/releases)
 
 [English](README.md) | 中文
 
 使用本地 PowerShell 脚本和 GitHub Actions 自动编译 OpenSSL Windows 版本。
 
 1. 本地一条命令编译 OpenSSL。
-2. GitHub Actions 每日检查 OpenSSL 官方最新稳定版。
+2. GitHub Actions 每周检查 OpenSSL 官方最新稳定版。
 3. 当前仓库不存在匹配 release 或 tag 时才构建。
 4. 将 x64/x86 动态库和静态库 ZIP 包发布到 GitHub Releases。
 
@@ -69,31 +69,31 @@ nasm -v
 指定版本：
 
 ```powershell
-.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.0
+.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.1
 ```
 
 同时编译 x64 和 x86：
 
 ```powershell
-.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.0 -Targets "x64,x86"
+.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.1 -Targets "x64,x86"
 ```
 
 只编译静态库：
 
 ```powershell
-.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.0 -Targets x64 -Linkage static
+.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.1 -Targets x64 -Linkage static
 ```
 
 同时编译动态库和静态库：
 
 ```powershell
-.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.0 -Targets "x64,x86" -Linkage both
+.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.1 -Targets "x64,x86" -Linkage both
 ```
 
 只安装到 `dist`，不打包 ZIP：
 
 ```powershell
-.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.0 -Targets x64 -Linkage shared -NoPackage
+.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.1 -Targets x64 -Linkage shared -NoPackage
 ```
 
 默认输出目录：
@@ -105,10 +105,10 @@ nasm -v
 生成的包名类似：
 
 ```text
-openssl-4.0.0-windows-x64-shared.zip
-openssl-4.0.0-windows-x64-static.zip
-openssl-4.0.0-windows-x86-shared.zip
-openssl-4.0.0-windows-x86-static.zip
+openssl-4.0.1-windows-x64-shared.zip
+openssl-4.0.1-windows-x64-static.zip
+openssl-4.0.1-windows-x86-shared.zip
+openssl-4.0.1-windows-x86-static.zip
 ```
 
 ## 脚本说明
@@ -129,6 +129,8 @@ openssl-4.0.0-windows-x86-static.zip
 
 定时工作流每周运行一次，会先检查 OpenSSL 官方最新稳定版。如果当前仓库已经存在匹配的 `openssl-x.y.z` release 或 tag，就跳过构建。
 
+跳过的定时 run 会自动清理。如果定时工作流没有执行任何 OpenSSL build job，它会排队触发 `.github/workflows/delete-skipped-openssl-runs.yml`，该工作流会等待目标 run 完成，确认它是成功结束的定时无构建 run，然后从 Actions 历史中删除。
+
 云端构建使用 GitHub 官方的 `windows-2025-vs2026` runner，也就是 Windows Server 2025 with Visual Studio 2026 镜像。
 
 你也可以在 GitHub 的 **Actions** 页面手动运行，参数包括：
@@ -141,8 +143,8 @@ openssl-4.0.0-windows-x86-static.zip
 推送 `openssl-*` tag 也会触发构建：
 
 ```powershell
-git tag openssl-4.0.0
-git push origin openssl-4.0.0
+git tag openssl-4.0.1
+git push origin openssl-4.0.1
 ```
 
 tag 触发的构建会自动上传 ZIP 包到对应的 GitHub Release。

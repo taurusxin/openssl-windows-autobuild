@@ -4,14 +4,14 @@
 [![GitHub release](https://img.shields.io/github/v/release/taurusxin/openssl-windows-autobuild?include_prereleases&sort=semver&style=flat-square)](https://github.com/taurusxin/openssl-windows-autobuild/releases)
 [![Last commit](https://img.shields.io/github/last-commit/taurusxin/openssl-windows-autobuild?style=flat-square)](https://github.com/taurusxin/openssl-windows-autobuild/commits/main)
 [![Platform](https://img.shields.io/badge/platform-Windows-0078D4?style=flat-square)](https://github.com/taurusxin/openssl-windows-autobuild)
-[![OpenSSL](https://img.shields.io/badge/OpenSSL-4.0.0-721412?style=flat-square)](https://github.com/openssl/openssl)
+[![Upstream OpenSSL](https://img.shields.io/github/v/release/openssl/openssl?include_prereleases&sort=semver&style=flat-square&label=upstream&color=721412)](https://github.com/openssl/openssl/releases)
 
 English | [中文](README.zh-CN.md)
 
 Automated Windows builds for OpenSSL using local PowerShell scripts and GitHub Actions.
 
 1. Build OpenSSL locally with a single command.
-2. Check the latest upstream OpenSSL release every day with GitHub Actions.
+2. Check the latest upstream OpenSSL release every week with GitHub Actions.
 3. Build only when a matching release or tag does not already exist.
 4. Publish x64/x86 shared and static ZIP packages to GitHub Releases.
 
@@ -69,31 +69,31 @@ Build the latest OpenSSL release for x64 shared libraries:
 Build a specific version:
 
 ```powershell
-.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.0
+.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.1
 ```
 
 Build both x64 and x86:
 
 ```powershell
-.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.0 -Targets "x64,x86"
+.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.1 -Targets "x64,x86"
 ```
 
 Build static libraries only:
 
 ```powershell
-.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.0 -Targets x64 -Linkage static
+.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.1 -Targets x64 -Linkage static
 ```
 
 Build both shared and static libraries:
 
 ```powershell
-.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.0 -Targets "x64,x86" -Linkage both
+.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.1 -Targets "x64,x86" -Linkage both
 ```
 
 Install to `dist` without creating ZIP packages:
 
 ```powershell
-.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.0 -Targets x64 -Linkage shared -NoPackage
+.\scripts\Invoke-OpenSslBuild.ps1 -Version 4.0.1 -Targets x64 -Linkage shared -NoPackage
 ```
 
 Default output directories:
@@ -105,10 +105,10 @@ Default output directories:
 Generated package names look like this:
 
 ```text
-openssl-4.0.0-windows-x64-shared.zip
-openssl-4.0.0-windows-x64-static.zip
-openssl-4.0.0-windows-x86-shared.zip
-openssl-4.0.0-windows-x86-static.zip
+openssl-4.0.1-windows-x64-shared.zip
+openssl-4.0.1-windows-x64-static.zip
+openssl-4.0.1-windows-x86-shared.zip
+openssl-4.0.1-windows-x86-static.zip
 ```
 
 ## Scripts
@@ -129,6 +129,8 @@ The workflow is located at:
 
 The scheduled workflow runs once per week. It checks the latest stable OpenSSL release from upstream first. If this repository already has a matching `openssl-x.y.z` release or tag, the build is skipped.
 
+Skipped scheduled runs are cleaned up automatically. When the scheduled workflow does not execute any OpenSSL build job, it queues `.github/workflows/delete-skipped-openssl-runs.yml`, which waits for the run to complete, verifies that it was a successful scheduled no-build run, and deletes it from the Actions history.
+
 Cloud builds use the GitHub-hosted `windows-2025-vs2026` runner, which provides Windows Server 2025 with the Visual Studio 2026 image.
 
 You can also run the workflow manually from the GitHub **Actions** page. Available inputs:
@@ -141,8 +143,8 @@ You can also run the workflow manually from the GitHub **Actions** page. Availab
 Pushing an `openssl-*` tag also triggers a build:
 
 ```powershell
-git tag openssl-4.0.0
-git push origin openssl-4.0.0
+git tag openssl-4.0.1
+git push origin openssl-4.0.1
 ```
 
 Tag-triggered builds automatically upload ZIP packages to the matching GitHub Release.
