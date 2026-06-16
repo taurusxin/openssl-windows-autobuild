@@ -129,8 +129,6 @@ The workflow is located at:
 
 The scheduled workflow runs once per week. It checks the latest stable OpenSSL release from upstream first. If this repository already has a matching `openssl-x.y.z` release or tag, the build is skipped.
 
-Skipped scheduled runs are cleaned up automatically. When the scheduled workflow does not execute any OpenSSL build job, it queues `.github/workflows/delete-skipped-openssl-runs.yml`, which waits for the run to complete, verifies that it was a successful scheduled no-build run, and deletes it from the Actions history.
-
 Cloud builds use the GitHub-hosted `windows-2025-vs2026` runner, which provides Windows Server 2025 with the Visual Studio 2026 image.
 
 You can also run the workflow manually from the GitHub **Actions** page. Available inputs:

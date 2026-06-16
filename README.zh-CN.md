@@ -129,8 +129,6 @@ openssl-4.0.1-windows-x86-static.zip
 
 定时工作流每周运行一次，会先检查 OpenSSL 官方最新稳定版。如果当前仓库已经存在匹配的 `openssl-x.y.z` release 或 tag，就跳过构建。
 
-跳过的定时 run 会自动清理。如果定时工作流没有执行任何 OpenSSL build job，它会排队触发 `.github/workflows/delete-skipped-openssl-runs.yml`，该工作流会等待目标 run 完成，确认它是成功结束的定时无构建 run，然后从 Actions 历史中删除。
-
 云端构建使用 GitHub 官方的 `windows-2025-vs2026` runner，也就是 Windows Server 2025 with Visual Studio 2026 镜像。
 
 你也可以在 GitHub 的 **Actions** 页面手动运行，参数包括：
